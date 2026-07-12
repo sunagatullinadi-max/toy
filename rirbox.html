@@ -129,6 +129,27 @@ const pivot = new THREE.Group;
 
 scene.add(pivot);
 
+const MOBILE_BREAKPOINT = 768;
+
+const MOBILE_ZOOM_OUT = 1 / 0.7;
+
+const sceneCenter = new THREE.Vector3;
+
+let sceneMaxDim = 1;
+
+let sceneSizeY = 0;
+
+function isMobileViewport() {
+  return window.innerWidth <= MOBILE_BREAKPOINT;
+}
+
+function updateCameraDistance() {
+  const zoomOut = isMobileViewport() ? MOBILE_ZOOM_OUT : 1;
+  const dist = sceneMaxDim * 2.1 * zoomOut;
+  camera.position.set(sceneCenter.x, sceneCenter.y + sceneSizeY * .12, sceneCenter.z + dist);
+  camera.lookAt(sceneCenter.x, sceneCenter.y, sceneCenter.z);
+}
+
 function createShadowDisc() {
   const size = 512;
   const canvas = document.createElement("canvas");
@@ -584,10 +605,10 @@ createLogoTexture().then(logoTexture => {
     const shadowScale = Math.max(size.x, size.z) * 1.7;
     shadowDisc.scale.set(shadowScale, shadowScale, 1);
     shadowDisc.position.set(center.x, box.min.y + .001, center.z);
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const dist = maxDim * 2.1;
-    camera.position.set(center.x, center.y + size.y * .12, center.z + dist);
-    camera.lookAt(center.x, center.y, center.z);
+    sceneCenter.copy(center);
+    sceneMaxDim = Math.max(size.x, size.y, size.z);
+    sceneSizeY = size.y;
+    updateCameraDistance();
     controlsState.target.copy(center);
     loaderEl.classList.add("hidden");
   });
@@ -681,6 +702,7 @@ window.addEventListener("pointercancel", () => onPointerUp(null));
 
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
+  updateCameraDistance();
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
