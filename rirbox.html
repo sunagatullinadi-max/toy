@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>РИР — 3D модель бокса</title>
+<title>РИР — 3D модель коробки</title>
 <style>
   html, body {
     margin: 0;
     height: 100%;
     overflow: hidden;
-    background: #0d0e2e;
+    background: transparent;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   }
   #stage {
@@ -74,17 +74,18 @@ const loaderEl = document.getElementById("loader");
 
 const scene = new THREE.Scene;
 
-scene.background = new THREE.Color(BLUE);
-
 const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, .1, 100);
 
 const renderer = new THREE.WebGLRenderer({
-  antialias: true
+  antialias: true,
+  alpha: true
 });
 
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 renderer.setSize(window.innerWidth, window.innerHeight);
+
+renderer.setClearColor(0x000000, 0);
 
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
