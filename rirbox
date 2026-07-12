@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>РИР — 3D модель коробки</title>
+<title>РИР — 3D модель бокса</title>
 <style>
   html, body {
     margin: 0;
