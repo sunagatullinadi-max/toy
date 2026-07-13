@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>РИР — 3D модель коробки</title>
+<title>РИР — 3D модель коробки (белый вариант)</title>
 <style>
   html, body {
     margin: 0;
@@ -18,7 +18,7 @@
     width: 100%;
     height: 100%;
     cursor: grab;
-    touch-action: none;
+    touch-action: pan-y;
   }
   #stage.dragging { cursor: grabbing; }
   #loader {
@@ -64,7 +64,7 @@ const MODEL_BASE64 = "Z2xURgIAAACwPwkAsAYAAEpTT057ImFzc2V0Ijp7InZlcnNpb24iOiIyLj
 
 const LOGO_SVG = `<svg width="594" height="615" viewBox="0 0 594 615" fill="none" xmlns="http://www.w3.org/2000/svg">\n<path d="M0.54953 0L165.35 73.64C198.79 88.59 222.37 101.46 237.68 112.81C252.35 123.68 262.3 135.51 267.91 148.49C273.41 161.27 276.16 177.55 276.16 197.49V281.12C276.16 301.09 273.44 315.9 267.91 325.7C262.29 335.67 252.35 342.15 237.68 345.1C222.35 348.2 198.79 348.34 165.35 345.27L92.1895 338.54V503.87L0.519531 513.5V0H0.54953ZM172.45 142.6L92.2195 113.71L93.1696 265.32L172.46 279.57V142.6H172.45ZM464.5 464.72L414.53 469.99V275.41L407.94 313.62L367.16 475L293.77 482.72V131.03L357.07 159.33V346.17L363.69 311.65L397.33 177.33L464.5 207.35V464.73V464.72ZM485.59 216.74L562.33 251.04C571.44 255.09 578.09 259.32 582.53 263.77C586.85 268.11 589.84 273.51 591.5 279.99C593.16 286.41 593.99 295.11 593.99 306.09V410.2C593.99 421.18 593.16 429.58 591.5 435.43C589.84 441.34 586.83 445.74 582.44 448.61C577.94 451.54 571.32 453.48 562.33 454.44L531.87 457.65V594L485.62 614.67V216.74H485.59ZM561.41 416.96V288.21L531.87 278.02L532.099 417.07L561.44 416.96H561.41Z" fill="#161748"/>\n</svg>`;
 
-const BLUE = 1447752;
+const BLUE = 16777215;
 
 const WHITE = 16777215;
 
@@ -150,8 +150,40 @@ let sceneMaxDim = 1;
 
 let sceneSizeY = 0;
 
+let boxLocalMin = null;
+
+let boxLocalMax = null;
+
+const HIT_TEST_PADDING = 50;
+
 function isMobileViewport() {
   return window.innerWidth <= MOBILE_BREAKPOINT;
+}
+
+function isPointerOnBox(clientX, clientY) {
+  if (!boxLocalMin || !boxLocalMax) return true;
+  const corners = [
+    [ boxLocalMin.x, boxLocalMin.y, boxLocalMin.z ],
+    [ boxLocalMin.x, boxLocalMin.y, boxLocalMax.z ],
+    [ boxLocalMin.x, boxLocalMax.y, boxLocalMin.z ],
+    [ boxLocalMin.x, boxLocalMax.y, boxLocalMax.z ],
+    [ boxLocalMax.x, boxLocalMin.y, boxLocalMin.z ],
+    [ boxLocalMax.x, boxLocalMin.y, boxLocalMax.z ],
+    [ boxLocalMax.x, boxLocalMax.y, boxLocalMin.z ],
+    [ boxLocalMax.x, boxLocalMax.y, boxLocalMax.z ]
+  ];
+  const tmp = new THREE.Vector3;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  corners.forEach(c => {
+    tmp.set(c[0], c[1], c[2]).applyMatrix4(pivot.matrixWorld).project(camera);
+    const sx = (tmp.x * .5 + .5) * window.innerWidth;
+    const sy = (1 - (tmp.y * .5 + .5)) * window.innerHeight;
+    if (sx < minX) minX = sx;
+    if (sx > maxX) maxX = sx;
+    if (sy < minY) minY = sy;
+    if (sy > maxY) maxY = sy;
+  });
+  return clientX >= minX - HIT_TEST_PADDING && clientX <= maxX + HIT_TEST_PADDING && clientY >= minY - HIT_TEST_PADDING && clientY <= maxY + HIT_TEST_PADDING;
 }
 
 function updateCameraDistance() {
@@ -457,7 +489,7 @@ function createFortunePaperTexture(text) {
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#FBF4E2";
+  ctx.fillStyle = "#F4F3EF";
   ctx.fillRect(0, 0, w, h);
   const grad = ctx.createRadialGradient(w / 2, h / 2, h * .2, w / 2, h / 2, w * .6);
   grad.addColorStop(0, "rgba(0,0,0,0)");
@@ -500,7 +532,7 @@ function createLogoTexture() {
     const ringRadius = size / 2 - 70;
     ctx.beginPath();
     ctx.arc(size / 2, size / 2, ringRadius, 0, Math.PI * 2);
-    ctx.fillStyle = "#CFCFCF";
+    ctx.fillStyle = "#F4F3EF";
     ctx.fill();
     ctx.lineWidth = 12;
     ctx.strokeStyle = "#161748";
@@ -586,6 +618,8 @@ createLogoTexture().then(logoTexture => {
     paperMeshBack.rotation.y = Math.PI;
     paperMeshBack.position.set(center.x, paperCenterY, center.z - .002);
     pivot.add(paperMeshBack);
+    boxLocalMin = box.min.clone();
+    boxLocalMax = box.max.clone();
     sceneCenter.copy(center);
     sceneMaxDim = Math.max(size.x, size.y, size.z);
     sceneSizeY = size.y;
@@ -629,6 +663,8 @@ function toggleBoxOpen() {
 
 let isDragging = false;
 
+let pointerDownOnBox = false;
+
 let lastX = 0;
 
 let lastY = 0;
@@ -640,6 +676,8 @@ let pointerDownY = 0;
 let pointerDownTime = 0;
 
 function onPointerDown(e) {
+  pointerDownOnBox = isPointerOnBox(e.clientX, e.clientY);
+  if (!pointerDownOnBox) return;
   isDragging = true;
   stage.classList.add("dragging");
   lastX = e.clientX;
@@ -648,6 +686,7 @@ function onPointerDown(e) {
   pointerDownY = e.clientY;
   pointerDownTime = performance.now();
   stage.setPointerCapture && e.pointerId != null && stage.setPointerCapture(e.pointerId);
+  e.preventDefault();
 }
 
 function onPointerMove(e) {
@@ -665,7 +704,7 @@ function onPointerMove(e) {
 function onPointerUp(e) {
   isDragging = false;
   stage.classList.remove("dragging");
-  if (!e) return;
+  if (!e || !pointerDownOnBox) return;
   const dx = e.clientX - pointerDownX;
   const dy = e.clientY - pointerDownY;
   const moved = Math.hypot(dx, dy);
