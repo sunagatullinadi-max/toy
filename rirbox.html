@@ -133,8 +133,6 @@ const MOBILE_BREAKPOINT = 768;
 
 const MOBILE_ZOOM_OUT = 1 / 0.7;
 
-const DESKTOP_VERTICAL_LIFT = 0.18;
-
 const sceneCenter = new THREE.Vector3;
 
 let sceneMaxDim = 1;
@@ -149,9 +147,8 @@ function updateCameraDistance() {
   const mobile = isMobileViewport();
   const zoomOut = mobile ? MOBILE_ZOOM_OUT : 1;
   const dist = sceneMaxDim * 2.1 * zoomOut;
-  const verticalLift = mobile ? 0 : sceneSizeY * DESKTOP_VERTICAL_LIFT;
   camera.position.set(sceneCenter.x, sceneCenter.y + sceneSizeY * .12, sceneCenter.z + dist);
-  camera.lookAt(sceneCenter.x, sceneCenter.y - verticalLift, sceneCenter.z);
+  camera.lookAt(sceneCenter.x, sceneCenter.y, sceneCenter.z);
 }
 
 function createShadowDisc() {
