@@ -129,6 +129,17 @@ const pivot = new THREE.Group;
 
 scene.add(pivot);
 
+const LOGO_X = 0.884;
+
+const LOGO_TILT = 0.0415;
+
+function setLogoOrientation(mesh, yaw, tilt) {
+  const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+  const qTilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), tilt);
+  qYaw.premultiply(qTilt);
+  mesh.quaternion.copy(qYaw);
+}
+
 const MOBILE_BREAKPOINT = 768;
 
 const MOBILE_ZOOM_OUT = 1 / 0.7;
@@ -150,34 +161,6 @@ function updateCameraDistance() {
   camera.position.set(sceneCenter.x, sceneCenter.y + sceneSizeY * .12, sceneCenter.z + dist);
   camera.lookAt(sceneCenter.x, sceneCenter.y, sceneCenter.z);
 }
-
-function createShadowDisc() {
-  const size = 512;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  grad.addColorStop(0, "rgba(0,0,0,0.45)");
-  grad.addColorStop(.6, "rgba(0,0,0,0.18)");
-  grad.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
-  const tex = new THREE.CanvasTexture(canvas);
-  const mat = new THREE.MeshBasicMaterial({
-    map: tex,
-    transparent: true,
-    depthWrite: false
-  });
-  const geo = new THREE.CircleGeometry(1, 48);
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.rotation.x = -Math.PI / 2;
-  return mesh;
-}
-
-const shadowDisc = createShadowDisc();
-
-scene.add(shadowDisc);
 
 function base64ToArrayBuffer(base64) {
   const binary = atob(base64);
@@ -579,12 +562,12 @@ createLogoTexture().then(logoTexture => {
       return new THREE.Mesh(logoGeo, logoMat);
     }
     const leftLogoMesh = buildLogoMesh();
-    leftLogoMesh.position.set(box.min.x - .01, bodyCenterY, center.z);
-    leftLogoMesh.rotation.y = -Math.PI / 2;
+    setLogoOrientation(leftLogoMesh, -Math.PI / 2, LOGO_TILT);
+    leftLogoMesh.position.set(-LOGO_X, bodyCenterY, center.z);
     leftHalf.add(leftLogoMesh);
     const rightLogoMesh = buildLogoMesh();
-    rightLogoMesh.position.set(box.max.x + .01, bodyCenterY, center.z);
-    rightLogoMesh.rotation.y = Math.PI / 2;
+    setLogoOrientation(rightLogoMesh, Math.PI / 2, -LOGO_TILT);
+    rightLogoMesh.position.set(LOGO_X, bodyCenterY, center.z);
     rightHalf.add(rightLogoMesh);
     const paperInfo = createFortunePaperTexture("собери их всех!");
     const paperW = 1.15 * 1.5;
@@ -603,9 +586,6 @@ createLogoTexture().then(logoTexture => {
     paperMeshBack.rotation.y = Math.PI;
     paperMeshBack.position.set(center.x, paperCenterY, center.z - .002);
     pivot.add(paperMeshBack);
-    const shadowScale = Math.max(size.x, size.z) * 1.7;
-    shadowDisc.scale.set(shadowScale, shadowScale, 1);
-    shadowDisc.position.set(center.x, box.min.y + .001, center.z);
     sceneCenter.copy(center);
     sceneMaxDim = Math.max(size.x, size.y, size.z);
     sceneSizeY = size.y;
