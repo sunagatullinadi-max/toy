@@ -1189,7 +1189,7 @@ createLogoTexture().then(logoTexture => {
         const box3 = new THREE.Box3().setFromObject(frogModel);
         const size = new THREE.Vector3();
         box3.getSize(size);
-        const scale = 1.2 / Math.max(size.x, size.y, size.z);
+        const scale = 1.8 / Math.max(size.x, size.y, size.z);
         frogModel.scale.setScalar(scale);
 
         const paperCenterY = (box.min.y + body.bodyTopY) / 2;
@@ -1198,19 +1198,19 @@ createLogoTexture().then(logoTexture => {
         box3.getCenter(center3);
         frogModel.position.set(
           center.x - center3.x,
-          paperCenterY - 0.1 - center3.y,
+          paperCenterY + 0.15 - center3.y,
           center.z - center3.z
         );
 
         pivot.add(frogModel);
 
-        const frogLight1 = new THREE.PointLight(0xffee00, 6.0, 6);
+        const frogLight1 = new THREE.PointLight(0xffee00, 5.0, 6);
         frogLight1.position.set(0.3, 1.0, 0.6);
         pivot.add(frogLight1);
-        const frogLight2 = new THREE.PointLight(0xffcc00, 4.0, 5);
+        const frogLight2 = new THREE.PointLight(0xffcc00, 3.0, 5);
         frogLight2.position.set(-0.4, 0.2, -0.4);
         pivot.add(frogLight2);
-        const frogLight3 = new THREE.PointLight(0xff9900, 2.5, 4);
+        const frogLight3 = new THREE.PointLight(0xffaa00, 2.0, 4);
         frogLight3.position.set(0.0, -0.5, 0.5);
         pivot.add(frogLight3);
       }, undefined, function(err) {
