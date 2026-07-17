@@ -109,19 +109,34 @@
   }
   #loader.hidden { opacity: 0; }
   @media (max-width: 600px) {
+    html, body {
+      height: 100%;
+      min-height: 100svh;
+    }
     .glass-card {
-      top: calc(50% + 12vh);
+      top: 42%;
       width: 92vw;
-      height: 76vh;
+      height: 58vh;
       border-radius: 28px;
     }
     .tap-label {
       left: 50%;
       top: auto;
-      bottom: 24px;
+      bottom: 16px;
       transform: translateX(-50%) rotate(-4deg);
       font-size: 10px;
-      padding: 9px 20px;
+      padding: 8px 18px;
+      z-index: 30;
+    }
+    .info-card {
+      right: auto;
+      left: 50%;
+      top: auto;
+      bottom: 70px;
+      transform: translateX(-50%) rotate(0deg);
+      width: min(280px, 84vw);
+      padding: 14px 16px 12px;
+      font-size: 12px;
     }
   }
 
