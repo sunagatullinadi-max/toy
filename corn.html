@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>РИР — Коробочка с ракетой</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f5f5f5;
+  }
+  #stage {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    touch-action: pan-y;
+    z-index: 20;
+  }
+  #stage.dragging { cursor: grabbing; }
+  .glass-card {
+    position: fixed;
+    top: calc(50% + 5vh);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(520px, 88vw);
+    height: min(600px, 86vh);
+    border-radius: 36px;
+    background: rgba(255,255,255, 0.18);
+    backdrop-filter: blur(2px) saturate(120%);
+    -webkit-backdrop-filter: blur(2px) saturate(120%);
+    border-top: 1.5px solid rgba(255,255,255, 1);
+    border-left: 1.5px solid rgba(255,255,255, 0.85);
+    border-right: 1.5px solid rgba(200,215,240, 0.3);
+    border-bottom: 1.5px solid rgba(200,215,240, 0.2);
+    box-shadow: 0 28px 72px rgba(180,200,240, 0.18), 0 4px 16px rgba(0,0,0,0.05),
+      inset 0 2px 4px rgba(255,255,255, 0.9), inset 0 -1px 4px rgba(180,200,240, 0.1);
+    pointer-events: none;
+    z-index: 10;
+  }
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 60%; height: 52%;
+    background: linear-gradient(128deg, rgba(255,255,255,0.48) 0%, rgba(255,255,255,0.06) 50%, transparent 68%);
+    border-radius: 36px 0 0 0;
+  }
+  .glass-card::after {
+    content: '';
+    position: absolute;
+    top: 14px; left: 8%; right: 8%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,1) 35%, rgba(255,255,255,0.6) 65%, transparent);
+  }
+  .tap-label {
+    position: fixed;
+    left: calc(50% - min(260px, 44vw) + 24px);
+    top: calc(50% + 5vh);
+    transform: translateX(-100%) translateY(-50%) rotate(-8deg);
+    transform-origin: right center;
+    padding: 11px 24px;
+    border-radius: 40px;
+    background: rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(255,255,255, 0.65);
+    box-shadow: 0 4px 20px rgba(160,185,230, 0.22), inset 0 1px 0 rgba(255,255,255, 0.75);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(70,100,160, 0.88);
+    animation: pulse 2.6s ease-in-out infinite;
+    z-index: 15;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .tap-label::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 12%; right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
+    border-radius: 50%;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  #loader {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #bbb;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: 40;
+  }
+  #loader.hidden { opacity: 0; }
+  @media (max-width: 600px) {
+    html, body {
+      height: 100%;
+      min-height: 100svh;
+    }
+    .glass-card {
+      top: 42%;
+      width: 92vw;
+      height: 58vh;
+      border-radius: 28px;
+    }
+    .tap-label {
+      left: 50%;
+      top: auto;
+      bottom: 16px;
+      transform: translateX(-50%) rotate(-4deg);
+      font-size: 10px;
+      padding: 8px 18px;
+      z-index: 30;
+    }
+    .info-card {
+      right: auto;
+      left: 50%;
+      top: auto;
+      bottom: 70px;
+      transform: translateX(-50%) rotate(0deg);
+      width: min(280px, 84vw);
+      padding: 14px 16px 12px;
+      font-size: 12px;
+    }
+  }
+
+  /* Карточка с описанием — появляется после открытия */
+  .info-card {
+    position: fixed;
+    right: calc(50% - min(260px, 44vw) + 24px);
+    top: calc(50% + 5vh);
+    transform: translateX(100%) translateY(-50%) rotate(6deg);
+    transform-origin: left center;
+    width: 220px;
+    padding: 20px 22px 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255,255,255, 0.65);
+    box-shadow:
+      0 4px 24px rgba(140,170,255, 0.18),
+      inset 0 1px 0 rgba(255,255,255, 0.8),
+      inset 0 -1px 0 rgba(180,200,240, 0.1);
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease 0.4s;
+  }
+  .info-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
+    border-radius: 50%;
+  }
+  .info-card.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .info-card p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(50, 70, 120, 0.9);
+    margin: 0 0 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  .info-card p strong {
+    font-size: 14px;
+    color: rgba(30, 50, 100, 0.95);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  @media (max-width: 600px) {
+    .info-card {
+      right: auto;
+      left: 50%;
+      top: auto;
+      bottom: 90px;
+      transform: translateX(-50%) rotate(0deg);
+      width: min(260px, 80vw);
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="glass-card"></div>
+  <div class="tap-label">нажми и открой</div>
+  <div id="stage"></div>
+  <div id="loader">Загрузка модели…</div>
+
+<script type="importmap">
+
+{
+
+  "imports": {
+
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+
+  }
+
+}
+
+</script>
+<script type="module">
+
+import * as THREE from "three";
+
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
+
+const BOX_URL = "https://raw.githubusercontent.com/sunagatullinadi-max/toy/main/rir_box_silver.glb";
+
+const LOGO_SVG = `<svg width="594" height="615" viewBox="0 0 594 615" fill="none" xmlns="http://www.w3.org/2000/svg">\n<path d="M0.54953 0L165.35 73.64C198.79 88.59 222.37 101.46 237.68 112.81C252.35 123.68 262.3 135.51 267.91 148.49C273.41 161.27 276.16 177.55 276.16 197.49V281.12C276.16 301.09 273.44 315.9 267.91 325.7C262.29 335.67 252.35 342.15 237.68 345.1C222.35 348.2 198.79 348.34 165.35 345.27L92.1895 338.54V503.87L0.519531 513.5V0H0.54953ZM172.45 142.6L92.2195 113.71L93.1696 265.32L172.46 279.57V142.6H172.45ZM464.5 464.72L414.53 469.99V275.41L407.94 313.62L367.16 475L293.77 482.72V131.03L357.07 159.33V346.17L363.69 311.65L397.33 177.33L464.5 207.35V464.73V464.72ZM485.59 216.74L562.33 251.04C571.44 255.09 578.09 259.32 582.53 263.77C586.85 268.11 589.84 273.51 591.5 279.99C593.16 286.41 593.99 295.11 593.99 306.09V410.2C593.99 421.18 593.16 429.58 591.5 435.43C589.84 441.34 586.83 445.74 582.44 448.61C577.94 451.54 571.32 453.48 562.33 454.44L531.87 457.65V594L485.62 614.67V216.74H485.59ZM561.41 416.96V288.21L531.87 278.02L532.099 417.07L561.44 416.96H561.41Z" fill="#161748"/>\n</svg>`;
+
+const BLUE = 16777215;
+
+const WHITE = 16777215;
+
+const stage = document.getElementById("stage");
+
+const loaderEl = document.getElementById("loader");
+
+const scene = new THREE.Scene;
+
+const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, .1, 100);
+
+const renderer = new THREE.WebGLRenderer({
+
+  antialias: true,
+
+  alpha: true
+
+});
+
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+renderer.setClearColor(0x000000, 0);
+
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+renderer.toneMappingExposure = 1.08;
+
+stage.appendChild(renderer.domElement);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+
+scene.environment = pmrem.fromScene(new RoomEnvironment, .04).texture;
+
+scene.add(new THREE.HemisphereLight(16777215, 724008, 1.05));
+
+const key = new THREE.DirectionalLight(16777215, 1.9);
+
+key.position.set(4, 6.5, 5.5);
+
+scene.add(key);
+
+const fill = new THREE.DirectionalLight(16777215, .5);
+
+fill.position.set(-5, 2, -4);
+
+scene.add(fill);
+
+const rim = new THREE.DirectionalLight(16777215, .9);
+
+rim.position.set(-1.5, 5, -6);
+
+scene.add(rim);
+
+const glow = new THREE.PointLight(16777215, .5, 12);
+
+glow.position.set(2, 3.2, 4.5);
+
+scene.add(glow);
+
+const pivot = new THREE.Group;
+
+scene.add(pivot);
+
+const LOGO_X = 0.884;
+
+const LOGO_TILT = 0.0415;
+
+function setLogoOrientation(mesh, yaw, tilt) {
+
+  const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+
+  const qTilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), tilt);
+
+  qYaw.premultiply(qTilt);
+
+  mesh.quaternion.copy(qYaw);
+
+}
+
+const MOBILE_BREAKPOINT = 768;
+
+const MOBILE_ZOOM_OUT = 1 / 0.7;
+
+const sceneCenter = new THREE.Vector3;
+
+let sceneMaxDim = 1;
+
+let sceneSizeY = 0;
+
+let boxLocalMin = null;
+
+let boxLocalMax = null;
+
+const HIT_TEST_PADDING = 50;
+
+function isMobileViewport() {
+
+  return window.innerWidth <= MOBILE_BREAKPOINT;
+
+}
+
+function isPointerOnBox(clientX, clientY) {
+
+  if (!boxLocalMin || !boxLocalMax) return true;
+
+  const corners = [
+
+    [ boxLocalMin.x, boxLocalMin.y, boxLocalMin.z ],
+
+    [ boxLocalMin.x, boxLocalMin.y, boxLocalMax.z ],
+
+    [ boxLocalMin.x, boxLocalMax.y, boxLocalMin.z ],
+
+    [ boxLocalMin.x, boxLocalMax.y, boxLocalMax.z ],
+
+    [ boxLocalMax.x, boxLocalMin.y, boxLocalMin.z ],
+
+    [ boxLocalMax.x, boxLocalMin.y, boxLocalMax.z ],
+
+    [ boxLocalMax.x, boxLocalMax.y, boxLocalMin.z ],
+
+    [ boxLocalMax.x, boxLocalMax.y, boxLocalMax.z ]
+
+  ];
+
+  const tmp = new THREE.Vector3;
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+  corners.forEach(c => {
+
+    tmp.set(c[0], c[1], c[2]).applyMatrix4(pivot.matrixWorld).project(camera);
+
+    const sx = (tmp.x * .5 + .5) * window.innerWidth;
+
+    const sy = (1 - (tmp.y * .5 + .5)) * window.innerHeight;
+
+    if (sx < minX) minX = sx;
+
+    if (sx > maxX) maxX = sx;
+
+    if (sy < minY) minY = sy;
+
+    if (sy > maxY) maxY = sy;
+
+  });
+
+  return clientX >= minX - HIT_TEST_PADDING && clientX <= maxX + HIT_TEST_PADDING && clientY >= minY - HIT_TEST_PADDING && clientY <= maxY + HIT_TEST_PADDING;
+
+}
+
+function updateCameraDistance() {
+
+  const mobile = isMobileViewport();
+
+  const zoomOut = mobile ? MOBILE_ZOOM_OUT : 1;
+
+  const dist = sceneMaxDim * 2.1 * zoomOut;
+
+  camera.position.set(sceneCenter.x, sceneCenter.y + sceneSizeY * .12, sceneCenter.z + dist);
+
+  camera.lookAt(sceneCenter.x, sceneCenter.y, sceneCenter.z);
+
+}
+
+function base64ToArrayBuffer(base64) {
+
+  const binary = atob(base64);
+
+  const len = binary.length;
+
+  const bytes = new Uint8Array(len);
+
+  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+
+  return bytes.buffer;
+
+}
+
+function computeBodyBounds(model) {
+
+  let yMin = 1 / 0, yMax = -1 / 0;
+
+  const points = [];
+
+  model.traverse(child => {
+
+    if (!child.isMesh) return;
+
+    const pos = child.geometry.attributes.position;
+
+    for (let i = 0; i < pos.count; i++) {
+
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+
+      points.push(x, y, z);
+
+      if (y < yMin) yMin = y;
+
+      if (y > yMax) yMax = y;
+
+    }
+
+  });
+
+  const bins = 60;
+
+  const stats = Array.from({
+
+    length: bins
+
+  }, () => ({
+
+    count: 0,
+
+    xMin: 1 / 0,
+
+    xMax: -1 / 0,
+
+    zMin: 1 / 0,
+
+    zMax: -1 / 0
+
+  }));
+
+  for (let i = 0; i < points.length; i += 3) {
+
+    const x = points[i], y = points[i + 1], z = points[i + 2];
+
+    let bi = Math.floor((y - yMin) / (yMax - yMin) * bins);
+
+    bi = Math.max(0, Math.min(bins - 1, bi));
+
+    const s = stats[bi];
+
+    s.count++;
+
+    if (x < s.xMin) s.xMin = x;
+
+    if (x > s.xMax) s.xMax = x;
+
+    if (z < s.zMin) s.zMin = z;
+
+    if (z > s.zMax) s.zMax = z;
+
+  }
+
+  const lowerCount = Math.floor(bins * .7);
+
+  let maxDepth = 0;
+
+  for (let i = 0; i < lowerCount; i++) {
+
+    const s = stats[i];
+
+    if (s.count === 0) continue;
+
+    maxDepth = Math.max(maxDepth, s.zMax - s.zMin);
+
+  }
+
+  let bodyTopBin = bins - 1;
+
+  for (let i = 0; i < bins; i++) {
+
+    const s = stats[i];
+
+    if (s.count === 0) continue;
+
+    if (s.zMax - s.zMin < maxDepth * .82) {
+
+      bodyTopBin = i;
+
+      break;
+
+    }
+
+  }
+
+  const bodyTopY = yMin + bodyTopBin / bins * (yMax - yMin);
+
+  let sumHalfW = 0, sumHalfD = 0, n = 0;
+
+  for (let i = 0; i < bodyTopBin; i++) {
+
+    const s = stats[i];
+
+    if (s.count === 0) continue;
+
+    sumHalfW += (s.xMax - s.xMin) / 2;
+
+    sumHalfD += (s.zMax - s.zMin) / 2;
+
+    n++;
+
+  }
+
+  return {
+
+    yMin: yMin,
+
+    yMax: yMax,
+
+    bodyTopY: bodyTopY,
+
+    halfWidth: n ? sumHalfW / n : .5,
+
+    halfDepth: n ? sumHalfD / n : .5
+
+  };
+
+}
+
+function paintGradient(model, body) {
+
+  const blue = new THREE.Color(BLUE);
+
+  const white = new THREE.Color(WHITE);
+
+  const tmp = new THREE.Color;
+
+  const gradStart = body.bodyTopY;
+
+  const gradEnd = body.yMax;
+
+  const meshes = [];
+
+  model.traverse(child => {
+
+    if (!child.isMesh) return;
+
+    const geo = child.geometry;
+
+    const pos = geo.attributes.position;
+
+    const index = geo.index ? geo.index.array : null;
+
+    const archVertexIndices = new Set;
+
+    if (index) for (let t = 0; t < index.length / 3; t++) {
+
+      if (!ARCH_WALL_TRIS.has(t)) continue;
+
+      archVertexIndices.add(index[t * 3]);
+
+      archVertexIndices.add(index[t * 3 + 1]);
+
+      archVertexIndices.add(index[t * 3 + 2]);
+
+    }
+
+    const colors = new Float32Array(pos.count * 3);
+
+    for (let i = 0; i < pos.count; i++) {
+
+      let t;
+
+      if (archVertexIndices.has(i)) t = 0; else {
+
+        t = (pos.getY(i) - gradStart) / (gradEnd - gradStart);
+
+        t = Math.max(0, Math.min(1, t));
+
+        t = t * t * (3 - 2 * t);
+
+      }
+
+      tmp.copy(blue).lerp(white, t);
+
+      colors[i * 3] = tmp.r;
+
+      colors[i * 3 + 1] = tmp.g;
+
+      colors[i * 3 + 2] = tmp.b;
+
+    }
+
+    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+    meshes.push(child);
+
+  });
+
+  return meshes;
+
+}
+
+new Set([ 1306, 1307, 1331, 1332, 1338, 1339, 1464, 1465, 1803, 1804, 1805, 1806, 1807, 1808, 1809, 1810, 1811, 1812, 1813, 1814, 1815, 1816 ]);
+
+new Set([ 1298, 1299, 1300, 1304, 1305, 1336, 1337, 1488, 1489, 1490, 1795, 1796, 1797, 1798, 1799, 1800, 1801, 1802 ]);
+
+new Set([ 1491, 1492, 1524, 1525, 1819, 1820, 1821 ]);
+
+new Set([ 1521, 1522, 1523, 1556, 1557, 1784, 1785 ]);
+
+new Set([ 1558, 1559, 1560, 1786, 1787, 1788 ]);
+
+new Set([ 1589, 1590, 1591, 1817, 1818 ]);
+
+new Set([ 1491, 1492, 1524, 1525, 1820, 1821 ]);
+
+new Set([ 1522, 1523, 1556, 1557, 1784, 1785 ]);
+
+new Set([ 1558, 1559, 1560, 1788 ]);
+
+new Set([ 1589, 1590, 1591, 1818 ]);
+
+const ARCH_WALL_TRIS = new Set([ 162, 163, 164, 165, 194, 195, 196, 197, 198, 199, 387, 388, 389, 390, 521, 522, 523, 524, 809, 810, 811, 812, 839, 840, 841, 842, 843, 844, 845, 846, 1034, 1035, 1036, 1037, 1158, 1159, 1160, 1161, 1162, 1163, 1164, 1165, 1280, 1281, 1282, 1283, 1284, 1285, 1405, 1406, 1407, 1413, 1414, 1415, 1416, 1417, 1418, 1495, 1496, 1497, 1498, 1515, 1516, 1517, 1518, 1528, 1529, 1530, 1531, 1532, 1549, 1550, 1551, 1552, 1553, 1563, 1564, 1565, 1566, 1583, 1584, 1585, 1586, 1608, 1609, 1610, 1611, 1612, 1613, 1614, 1615, 1616, 1617, 1618, 1619, 1640, 1641, 1642, 1643, 1644, 1645, 1646, 1647, 1648, 1649, 1650, 1651, 1672, 1673, 1674, 1675, 1676, 1677, 1678, 1679, 1680, 1681, 1682, 1683, 1704, 1705, 1706, 1707, 1708, 1709, 1710, 1711, 1712, 1713, 1714, 1715, 1743, 1744, 1745, 1746, 1775, 1776, 1777, 1778 ]);
+
+function buildStyledMesh(rawGeo, showEdges = true) {
+
+  const geo = mergeVertices(rawGeo, 1e-4);
+
+  geo.computeVertexNormals();
+
+  const material = new THREE.MeshStandardMaterial({
+
+    vertexColors: true,
+
+    roughness: .45,
+
+    metalness: .12,
+
+    envMapIntensity: 1.1,
+
+    side: THREE.DoubleSide
+
+  });
+
+  const mesh = new THREE.Mesh(geo, material);
+
+  mesh.castShadow = false;
+
+  mesh.receiveShadow = false;
+
+  if (showEdges) {
+
+    const edgesGeo = new THREE.EdgesGeometry(geo, 20);
+
+    const edgesMat = new THREE.LineBasicMaterial({
+
+      color: WHITE,
+
+      transparent: true,
+
+      opacity: .85
+
+    });
+
+    mesh.add(new THREE.LineSegments(edgesGeo, edgesMat));
+
+  }
+
+  return mesh;
+
+}
+
+function clipTrianglesByPlane(tris, nx, ny, d) {
+
+  const pos = [], neg = [];
+
+  function side(v) {
+
+    return nx * v.p[0] + ny * v.p[1] - d;
+
+  }
+
+  function lerpVert(a, b, t) {
+
+    return {
+
+      p: [ a.p[0] + (b.p[0] - a.p[0]) * t, a.p[1] + (b.p[1] - a.p[1]) * t, a.p[2] + (b.p[2] - a.p[2]) * t ],
+
+      c: [ a.c[0] + (b.c[0] - a.c[0]) * t, a.c[1] + (b.c[1] - a.c[1]) * t, a.c[2] + (b.c[2] - a.c[2]) * t ]
+
+    };
+
+  }
+
+  tris.forEach(([v0, v1, v2]) => {
+
+    const s0 = side(v0), s1 = side(v1), s2 = side(v2);
+
+    const above = [ s0 >= 0, s1 >= 0, s2 >= 0 ];
+
+    const cnt = above.filter(Boolean).length;
+
+    if (cnt === 3) {
+
+      pos.push([ v0, v1, v2 ]);
+
+      return;
+
+    }
+
+    if (cnt === 0) {
+
+      neg.push([ v0, v1, v2 ]);
+
+      return;
+
+    }
+
+    const verts3 = [ v0, v1, v2 ];
+
+    const sides = [ s0, s1, s2 ];
+
+    const loneAbove = cnt === 1;
+
+    const loneIdx = above.indexOf(loneAbove);
+
+    const otherIdx = [ 0, 1, 2 ].filter(i => i !== loneIdx);
+
+    const L = verts3[loneIdx], O1 = verts3[otherIdx[0]], O2 = verts3[otherIdx[1]];
+
+    const sL = sides[loneIdx], sO1 = sides[otherIdx[0]], sO2 = sides[otherIdx[1]];
+
+    const t1 = sL / (sL - sO1);
+
+    const t2 = sL / (sL - sO2);
+
+    const P1 = lerpVert(L, O1, t1);
+
+    const P2 = lerpVert(L, O2, t2);
+
+    const loneArr = loneAbove ? pos : neg;
+
+    const otherArr = loneAbove ? neg : pos;
+
+    loneArr.push([ L, P1, P2 ]);
+
+    otherArr.push([ O1, O2, P2 ]);
+
+    otherArr.push([ O1, P2, P1 ]);
+
+  });
+
+  return {
+
+    pos: pos,
+
+    neg: neg
+
+  };
+
+}
+
+function buildZigzagHalves(geometry, yMin, yMax, numSegments, amplitude) {
+
+  const pos = geometry.attributes.position;
+
+  const col = geometry.attributes.color;
+
+  const index = geometry.index ? geometry.index.array : null;
+
+  const triCount = index ? index.length / 3 : pos.count / 3;
+
+  const getIdx = (t, k) => index ? index[t * 3 + k] : t * 3 + k;
+
+  function vAt(i) {
+
+    return {
+
+      p: [ pos.getX(i), pos.getY(i), pos.getZ(i) ],
+
+      c: col ? [ col.getX(i), col.getY(i), col.getZ(i) ] : [ 1, 1, 1 ]
+
+    };
+
+  }
+
+  let allTris = [];
+
+  for (let t = 0; t < triCount; t++) allTris.push([ vAt(getIdx(t, 0)), vAt(getIdx(t, 1)), vAt(getIdx(t, 2)) ]);
+
+  const yBreaks = [];
+
+  for (let i = 0; i <= numSegments; i++) yBreaks.push(yMin + (yMax - yMin) * i / numSegments);
+
+  let seed = 42;
+
+  function rand() {
+
+    seed = (seed * 9301 + 49297) % 233280;
+
+    return seed / 233280;
+
+  }
+
+  const tailFade = Math.max(3, Math.round(numSegments * .12));
+
+  const xBreaks = yBreaks.map((_, i) => {
+
+    const taper = i >= numSegments - tailFade ? Math.max(0, (numSegments - i) / tailFade) : 1;
+
+    return (rand() * 2 - 1) * amplitude * taper;
+
+  });
+
+  let remaining = allTris;
+
+  const bands = [];
+
+  for (let i = 0; i < numSegments; i++) if (i === numSegments - 1) bands.push(remaining); else {
+
+    const {neg: belowBand, pos: aboveRest} = clipTrianglesByPlane(remaining, 0, 1, yBreaks[i + 1]);
+
+    bands.push(belowBand);
+
+    remaining = aboveRest;
+
+  }
+
+  const leftTris = [], rightTris = [];
+
+  bands.forEach((band, i) => {
+
+    const x0 = xBreaks[i], y0 = yBreaks[i];
+
+    const x1 = xBreaks[i + 1], y1 = yBreaks[i + 1];
+
+    const dx = x1 - x0, dy = y1 - y0;
+
+    const nx = dy, nyv = -dx;
+
+    const d = nx * x0 + nyv * y0;
+
+    const {pos: sideA, neg: sideB} = clipTrianglesByPlane(band, nx, nyv, d);
+
+    function avgX(list) {
+
+      let sum = 0, cnt = 0;
+
+      list.forEach(tri => tri.forEach(v => {
+
+        sum += v.p[0];
+
+        cnt++;
+
+      }));
+
+      return cnt ? sum / cnt : 0;
+
+    }
+
+    if (avgX(sideA) >= avgX(sideB)) {
+
+      rightTris.push(...sideA);
+
+      leftTris.push(...sideB);
+
+    } else {
+
+      rightTris.push(...sideB);
+
+      leftTris.push(...sideA);
+
+    }
+
+  });
+
+  function toGeometry(tris) {
+
+    const geo = new THREE.BufferGeometry;
+
+    const count = tris.length * 3;
+
+    const positions = new Float32Array(count * 3);
+
+    const colors = new Float32Array(count * 3);
+
+    let k = 0;
+
+    tris.forEach(tri => tri.forEach(v => {
+
+      positions[k * 3] = v.p[0];
+
+      positions[k * 3 + 1] = v.p[1];
+
+      positions[k * 3 + 2] = v.p[2];
+
+      colors[k * 3] = v.c[0];
+
+      colors[k * 3 + 1] = v.c[1];
+
+      colors[k * 3 + 2] = v.c[2];
+
+      k++;
+
+    }));
+
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+    return geo;
+
+  }
+
+  return {
+
+    leftGeo: toGeometry(leftTris),
+
+    rightGeo: toGeometry(rightTris)
+
+  };
+
+}
+
+function createFortunePaperTexture(text) {
+
+  const w = 1024, h = 260;
+
+  const canvas = document.createElement("canvas");
+
+  canvas.width = w;
+
+  canvas.height = h;
+
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#F4F3EF";
+
+  ctx.fillRect(0, 0, w, h);
+
+  const grad = ctx.createRadialGradient(w / 2, h / 2, h * .2, w / 2, h / 2, w * .6);
+
+  grad.addColorStop(0, "rgba(0,0,0,0)");
+
+  grad.addColorStop(1, "rgba(120,100,60,0.12)");
+
+  ctx.fillStyle = grad;
+
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.strokeStyle = "rgba(22,23,72,0.35)";
+
+  ctx.lineWidth = 3;
+
+  ctx.strokeRect(10, 10, w - 20, h - 20);
+
+  const inset = 34;
+
+  ctx.strokeStyle = "#161748";
+
+  ctx.lineWidth = 4;
+
+  ctx.strokeRect(inset, inset, w - inset * 2, h - inset * 2);
+
+  ctx.fillStyle = "#161748";
+
+  ctx.textAlign = "center";
+
+  ctx.textBaseline = "middle";
+
+  let fontSize = 92;
+
+  const maxTextWidth = w - 120;
+
+  do {
+
+    ctx.font = "bold " + fontSize + "px Arial";
+
+    fontSize -= 2;
+
+  } while (ctx.measureText(text).width > maxTextWidth && fontSize > 20);
+
+  ctx.fillText(text, w / 2, h / 2);
+
+  const tex = new THREE.CanvasTexture(canvas);
+
+  tex.colorSpace = THREE.SRGBColorSpace;
+
+  tex.anisotropy = 8;
+
+  return {
+
+    tex: tex,
+
+    aspect: w / h
+
+  };
+
+}
+
+function createLogoTexture() {
+
+  return new Promise(resolve => {
+
+    const size = 512;
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = size;
+
+    canvas.height = size;
+
+    const ctx = canvas.getContext("2d");
+
+    const ringRadius = size / 2 - 70;
+
+    ctx.beginPath();
+
+    ctx.arc(size / 2, size / 2, ringRadius, 0, Math.PI * 2);
+
+    ctx.fillStyle = "#F4F3EF";
+
+    ctx.fill();
+
+    ctx.lineWidth = 12;
+
+    ctx.strokeStyle = "#161748";
+
+    ctx.stroke();
+
+    const blob = new Blob([ LOGO_SVG ], {
+
+      type: "image/svg+xml"
+
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const img = new Image;
+
+    img.onload = () => {
+
+      const scale = .58;
+
+      const w = size * scale;
+
+      const h = w * (img.height / img.width);
+
+      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+
+      URL.revokeObjectURL(url);
+
+      const tex = new THREE.CanvasTexture(canvas);
+
+      tex.colorSpace = THREE.SRGBColorSpace;
+
+      tex.anisotropy = 8;
+
+      resolve(tex);
+
+    };
+
+    img.src = url;
+
+  });
+
+}
+
+const loader = new GLTFLoader;
+
+createLogoTexture().then(logoTexture => {
+
+  loader.load(BOX_URL, gltf => {
+
+    const model = gltf.scene;
+
+    const box = (new THREE.Box3).setFromObject(model);
+
+    const size = new THREE.Vector3;
+
+    const center = new THREE.Vector3;
+
+    box.getSize(size);
+
+    box.getCenter(center);
+
+    const body = computeBodyBounds(model);
+
+    const meshes = paintGradient(model, body);
+
+    let leftGeo = null;
+
+    let rightGeo = null;
+
+    meshes.forEach(mesh => {
+
+      const {leftGeo: lg, rightGeo: rg} = buildZigzagHalves(mesh.geometry, box.min.y, box.max.y, 26, .16);
+
+      leftGeo = lg;
+
+      rightGeo = rg;
+
+    });
+
+    const leftMesh = buildStyledMesh(leftGeo, false);
+
+    leftHalf.add(leftMesh);
+
+    const rightMesh = buildStyledMesh(rightGeo, false);
+
+    rightHalf.add(rightMesh);
+
+    const bodyHeight = body.bodyTopY - body.yMin;
+
+    const faceHalf = Math.min(body.halfWidth, bodyHeight / 2);
+
+    const circleDiameter = faceHalf * 2 * .5;
+
+    const bodyCenterY = (body.yMin + body.bodyTopY) / 2;
+
+    function buildLogoMesh() {
+
+      const logoGeo = new THREE.CircleGeometry(circleDiameter / 2, 64);
+
+      const logoMat = new THREE.MeshBasicMaterial({
+
+        map: logoTexture,
+
+        transparent: true,
+
+        toneMapped: false
+
+      });
+
+      return new THREE.Mesh(logoGeo, logoMat);
+
+    }
+
+    const leftLogoMesh = buildLogoMesh();
+
+    setLogoOrientation(leftLogoMesh, -Math.PI / 2, LOGO_TILT);
+
+    leftLogoMesh.position.set(-LOGO_X, bodyCenterY, center.z);
+
+    leftHalf.add(leftLogoMesh);
+
+    const rightLogoMesh = buildLogoMesh();
+
+    setLogoOrientation(rightLogoMesh, Math.PI / 2, -LOGO_TILT);
+
+    rightLogoMesh.position.set(LOGO_X, bodyCenterY, center.z);
+
+    rightHalf.add(rightLogoMesh);
+    (function() {
+      const FROG_URL = "https://raw.githubusercontent.com/sunagatullinadi-max/toy/main/corn.glb";
+
+      const loader = new GLTFLoader();
+      loader.load(FROG_URL, function(gltf) {
+        const frogModel = gltf.scene;
+
+        const box3 = new THREE.Box3().setFromObject(frogModel);
+        const size = new THREE.Vector3();
+        box3.getSize(size);
+        const scale = 1.2 / Math.max(size.x, size.y, size.z);
+        frogModel.scale.setScalar(scale);
+
+        const paperCenterY = (box.min.y + body.bodyTopY) / 2;
+        box3.setFromObject(frogModel);
+        const center3 = new THREE.Vector3();
+        box3.getCenter(center3);
+        frogModel.position.set(
+          center.x - center3.x,
+          paperCenterY - 0.1 - center3.y,
+          center.z - center3.z
+        );
+
+        pivot.add(frogModel);
+
+        const frogLight1 = new THREE.PointLight(0xffee00, 6.0, 6);
+        frogLight1.position.set(0.3, 1.0, 0.6);
+        pivot.add(frogLight1);
+        const frogLight2 = new THREE.PointLight(0xffcc00, 4.0, 5);
+        frogLight2.position.set(-0.4, 0.2, -0.4);
+        pivot.add(frogLight2);
+        const frogLight3 = new THREE.PointLight(0xff9900, 2.5, 4);
+        frogLight3.position.set(0.0, -0.5, 0.5);
+        pivot.add(frogLight3);
+      }, undefined, function(err) {
+        console.error('Frog load error:', err);
+      });
+    })();
+
+    boxLocalMin = box.min.clone();
+
+    boxLocalMax = box.max.clone();
+
+    sceneCenter.copy(center);
+
+    sceneMaxDim = Math.max(size.x, size.y, size.z);
+
+    sceneSizeY = size.y;
+
+    updateCameraDistance();
+
+    controlsState.target.copy(center);
+
+    loaderEl.classList.add("hidden");
+
+  });
+
+});
+
+const controlsState = {
+
+  target: new THREE.Vector3(0, 1.4, 0),
+
+  autoRotate: true,
+
+  rotateSpeed: .006,
+
+  dragSensitivity: .006,
+
+  pitchLimit: .5
+
+};
+
+const leftHalf = new THREE.Group;
+
+const rightHalf = new THREE.Group;
+
+pivot.add(leftHalf, rightHalf);
+
+const SPLIT_DISTANCE = .9;
+
+const openState = {
+
+  isOpen: false,
+
+  progress: 0,
+
+  animating: false
+
+};
+
+function easeInOutCubic(t) {
+
+  return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+}
+
+function toggleBoxOpen() {
+
+  openState.isOpen = !openState.isOpen;
+
+  openState.animating = true;
+
+  controlsState.autoRotate = false;
+
+}
+
+let isDragging = false;
+
+let pointerDownOnBox = false;
+
+let lastX = 0;
+
+let lastY = 0;
+
+let pointerDownX = 0;
+
+let pointerDownY = 0;
+
+let pointerDownTime = 0;
+
+function onPointerDown(e) {
+
+  pointerDownOnBox = isPointerOnBox(e.clientX, e.clientY);
+
+  if (!pointerDownOnBox) return;
+
+  isDragging = true;
+
+  stage.classList.add("dragging");
+
+  lastX = e.clientX;
+
+  lastY = e.clientY;
+
+  pointerDownX = e.clientX;
+
+  pointerDownY = e.clientY;
+
+  pointerDownTime = performance.now();
+
+  stage.setPointerCapture && e.pointerId != null && stage.setPointerCapture(e.pointerId);
+
+  e.preventDefault();
+
+}
+
+function onPointerMove(e) {
+
+  if (!isDragging) return;
+
+  const dx = e.clientX - lastX;
+
+  const dy = e.clientY - lastY;
+
+  lastX = e.clientX;
+
+  lastY = e.clientY;
+
+  controlsState.autoRotate = false;
+
+  pivot.rotation.y += dx * controlsState.dragSensitivity;
+
+  pivot.rotation.x += dy * controlsState.dragSensitivity;
+
+  pivot.rotation.x = Math.max(-controlsState.pitchLimit, Math.min(controlsState.pitchLimit, pivot.rotation.x));
+
+}
+
+function onPointerUp(e) {
+
+  isDragging = false;
+
+  stage.classList.remove("dragging");
+
+  if (!e || !pointerDownOnBox) return;
+
+  const dx = e.clientX - pointerDownX;
+
+  const dy = e.clientY - pointerDownY;
+
+  const moved = Math.hypot(dx, dy);
+
+  const elapsed = performance.now() - pointerDownTime;
+
+  if (moved < 6 && elapsed < 500) toggleBoxOpen();
+
+}
+
+stage.addEventListener("pointerdown", onPointerDown);
+
+window.addEventListener("pointermove", onPointerMove);
+
+window.addEventListener("pointerup", onPointerUp);
+
+window.addEventListener("pointercancel", () => onPointerUp(null));
+
+window.addEventListener("resize", () => {
+
+  camera.aspect = window.innerWidth / window.innerHeight;
+
+  updateCameraDistance();
+
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+});
+
+const OPEN_ANIM_SPEED = 1.6;
+
+let lastFrameTime = performance.now();
+
+function animate() {
+
+  requestAnimationFrame(animate);
+
+  const now = performance.now();
+
+  const dt = Math.min(.05, (now - lastFrameTime) / 1e3);
+
+  lastFrameTime = now;
+
+  if (controlsState.autoRotate) pivot.rotation.y -= controlsState.rotateSpeed;
+
+  if (openState.animating) {
+
+    const target = openState.isOpen ? 1 : 0;
+
+    const dir = target > openState.progress ? 1 : -1;
+
+    openState.progress += dir * OPEN_ANIM_SPEED * dt;
+
+    openState.progress = Math.max(0, Math.min(1, openState.progress));
+
+    if (openState.progress === target) {
+
+      openState.animating = false;
+
+      controlsState.autoRotate = true;
+
+    }
+
+  }
+
+  const openEase = easeInOutCubic(openState.progress);
+
+  leftHalf.position.x = -SPLIT_DISTANCE * openEase;
+
+  rightHalf.position.x = SPLIT_DISTANCE * openEase;
+
+  leftHalf.rotation.y = -.25 * openEase;
+
+  rightHalf.rotation.y = .25 * openEase;
+
+  renderer.render(scene, camera);
+
+}
+
+animate();
+
+    
+</script>
+
+  <div class=info-card id=infoCard>
+    <p><strong>Это Царица полей,</strong>героиня спецпроекта РИР<br>«Песня плывет, реклама поет»</p>
+  </div>
+
+<script>
+(function() {
+  var shown = false;
+  document.getElementById('stage').addEventListener('click', function() {
+    if (shown) return;
+    shown = true;
+    setTimeout(function() {
+      document.getElementById('infoCard').classList.add('visible');
+    }, 600);
+  });
+})();
+</script>
+</body>
+</html>
