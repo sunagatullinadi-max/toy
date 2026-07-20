@@ -143,6 +143,32 @@
     }
   }
 
+  /* ── МОБИЛЬНОЕ ПРИЛОЖЕНИЕ / УЗКОЕ ШИРОКОЕ ОКНО (~1196×400) ──
+     Тильда в мобильной версии и приложениях показывает не весь блок,
+     а только область 1196×400px — нужны отступы 85px сверху и 140px по бокам,
+     чтобы коробочка не обрезалась и не прилипала к краям. */
+  @media (min-width: 601px) and (max-width: 1260px) and (max-height: 460px) {
+    #stage {
+      top: 85px;
+      left: 140px;
+      right: 140px;
+      bottom: 0;
+      width: auto;
+      height: calc(100% - 85px);
+    }
+
+    .glass-card {
+      top: calc(42.5px + 55vh);
+      width: min(520px, calc(100vw - 280px));
+      height: min(600px, calc(100vh - 85px));
+    }
+
+    .tap-label {
+      top: calc(42.5px + 55vh);
+      left: calc(50% - min(260px, calc(50vw - 140px)) + 24px);
+    }
+  }
+
   #loader {
     position: fixed;
     inset: 0;
@@ -207,7 +233,25 @@ const loaderEl = document.getElementById("loader");
 
 const scene = new THREE.Scene;
 
-const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, .1, 100);
+function getStageMetrics() {
+
+  const rect = stage.getBoundingClientRect();
+
+  return {
+
+    w: rect.width || window.innerWidth,
+
+    h: rect.height || window.innerHeight,
+
+    left: rect.left,
+
+    top: rect.top
+
+  };
+
+}
+
+const camera = new THREE.PerspectiveCamera(40, getStageMetrics().w / getStageMetrics().h, .1, 100);
 
 const renderer = new THREE.WebGLRenderer({
 
@@ -219,7 +263,7 @@ const renderer = new THREE.WebGLRenderer({
 
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(getStageMetrics().w, getStageMetrics().h);
 
 renderer.setClearColor(0x000000, 0);
 
@@ -261,23 +305,7 @@ glow.position.set(2, 3.2, 4.5);
 
 scene.add(glow);
 
-const boxGlowLight1 = new THREE.PointLight(0x1f5bff, 11.0, 14);
-
-boxGlowLight1.position.set(1.5, 5, 3);
-
-scene.add(boxGlowLight1);
-
-const boxGlowLight2 = new THREE.PointLight(0x1f5bff, 8.0, 12);
-
-boxGlowLight2.position.set(-2, 1, -2);
-
-scene.add(boxGlowLight2);
-
-const boxGlowLight3 = new THREE.PointLight(0x1f5bff, 5.0, 10);
-
-boxGlowLight3.position.set(0, -2.5, 2.5);
-
-scene.add(boxGlowLight3);
+// Свечение коробки добавляется ниже, вокруг записки внутри pivot (см. paperMeshBack)
 
 const pivot = new THREE.Group;
 
@@ -349,13 +377,15 @@ function isPointerOnBox(clientX, clientY) {
 
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
+  const stageM = getStageMetrics();
+
   corners.forEach(c => {
 
     tmp.set(c[0], c[1], c[2]).applyMatrix4(pivot.matrixWorld).project(camera);
 
-    const sx = (tmp.x * .5 + .5) * window.innerWidth;
+    const sx = (tmp.x * .5 + .5) * stageM.w + stageM.left;
 
-    const sy = (1 - (tmp.y * .5 + .5)) * window.innerHeight;
+    const sy = (1 - (tmp.y * .5 + .5)) * stageM.h + stageM.top;
 
     if (sx < minX) minX = sx;
 
@@ -1193,6 +1223,17 @@ createLogoTexture().then(logoTexture => {
 
     pivot.add(paperMeshBack);
 
+    // Синее свечение (по тому же принципу, что в файле с ракетой)
+    const boxGlowLight1 = new THREE.PointLight(0x1f5bff, 5.0, 6);
+    boxGlowLight1.position.set(0.3, 1.0, 0.6);
+    pivot.add(boxGlowLight1);
+    const boxGlowLight2 = new THREE.PointLight(0x1f5bff, 3.0, 5);
+    boxGlowLight2.position.set(-0.4, 0.2, -0.4);
+    pivot.add(boxGlowLight2);
+    const boxGlowLight3 = new THREE.PointLight(0x1f5bff, 2.0, 4);
+    boxGlowLight3.position.set(0.0, -0.5, 0.5);
+    pivot.add(boxGlowLight3);
+
     boxLocalMin = box.min.clone();
 
     boxLocalMax = box.max.clone();
@@ -1353,13 +1394,15 @@ window.addEventListener("pointercancel", () => onPointerUp(null));
 
 window.addEventListener("resize", () => {
 
-  camera.aspect = window.innerWidth / window.innerHeight;
+  const stageM = getStageMetrics();
+
+  camera.aspect = stageM.w / stageM.h;
 
   updateCameraDistance();
 
   camera.updateProjectionMatrix();
 
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(stageM.w, stageM.h);
 
 });
 
