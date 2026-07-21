@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>РИР — Коробочка с ракетой</title>
+<title>РИР — Коробочка с кукурузой</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
@@ -28,8 +28,8 @@
     top: calc(50% + 5vh);
     left: 50%;
     transform: translate(-50%, -50%);
-    width: min(520px, 88vw);
-    height: min(600px, 86vh);
+    width: min(460px, 78vw);
+    height: min(530px, 76vh);
     border-radius: 36px;
     background: rgba(255,255,255, 0.18);
     backdrop-filter: blur(2px) saturate(120%);
@@ -60,7 +60,7 @@
   }
   .tap-label {
     position: fixed;
-    left: calc(50% - min(260px, 44vw) + 24px);
+    left: calc(50% - min(230px, 39vw) + 24px);
     top: calc(50% + 5vh);
     transform: translateX(-100%) translateY(-50%) rotate(-8deg);
     transform-origin: right center;
@@ -128,22 +128,12 @@
       padding: 8px 18px;
       z-index: 30;
     }
-    .info-card {
-      right: auto;
-      left: 50%;
-      top: auto;
-      bottom: 70px;
-      transform: translateX(-50%) rotate(0deg);
-      width: min(280px, 84vw);
-      padding: 14px 16px 12px;
-      font-size: 12px;
-    }
   }
 
   /* Карточка с описанием — появляется после открытия */
   .info-card {
     position: fixed;
-    right: calc(50% - min(260px, 44vw) + 24px);
+    right: calc(50% - min(230px, 39vw) + 24px);
     top: calc(50% + 5vh);
     transform: translateX(100%) translateY(-50%) rotate(6deg);
     transform-origin: left center;
@@ -193,10 +183,12 @@
     .info-card {
       right: auto;
       left: 50%;
-      top: auto;
-      bottom: 90px;
+      top: 3vh;
+      bottom: auto;
       transform: translateX(-50%) rotate(0deg);
-      width: min(260px, 80vw);
+      width: min(280px, 84vw);
+      padding: 14px 16px 12px;
+      font-size: 12px;
     }
   }
 </style>
@@ -398,7 +390,9 @@ function updateCameraDistance() {
 
   const zoomOut = mobile ? MOBILE_ZOOM_OUT : 1;
 
-  const dist = sceneMaxDim * 2.1 * zoomOut;
+  const BACKGROUND_MARGIN = 1.12; // немного отдаляем камеру, чтобы фон занимал больше пространства
+
+  const dist = sceneMaxDim * 2.1 * zoomOut * BACKGROUND_MARGIN;
 
   camera.position.set(sceneCenter.x, sceneCenter.y + sceneSizeY * .12, sceneCenter.z + dist);
 
@@ -1444,7 +1438,7 @@ animate();
 </script>
 
   <div class=info-card id=infoCard>
-    <p><strong>Это Поющая кукуруза,</strong>героиня спецпроекта РИР<br>«Песня плывет, реклама поет»</p>
+    <p><strong>Это Царица полей,</strong>героиня спецпроекта РИР<br>«Песня плывет, реклама поет»</p>
   </div>
 
 <script>
