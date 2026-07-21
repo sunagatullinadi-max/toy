@@ -28,8 +28,8 @@
     top: calc(50% + 5vh);
     left: 50%;
     transform: translate(-50%, -50%);
-    width: min(520px, 88vw);
-    height: min(600px, 86vh);
+    width: min(460px, 78vw);
+    height: min(530px, 76vh);
     border-radius: 36px;
     background: rgba(255,255,255, 0.18);
     backdrop-filter: blur(2px) saturate(120%);
@@ -60,7 +60,7 @@
   }
   .tap-label {
     position: fixed;
-    left: calc(50% - min(260px, 44vw) + 24px);
+    left: calc(50% - min(230px, 39vw) + 24px);
     top: calc(50% + 5vh);
     transform: translateX(-100%) translateY(-50%) rotate(-8deg);
     transform-origin: right center;
@@ -110,7 +110,7 @@
   #loader.hidden { opacity: 0; }
   .info-card {
     position: fixed;
-    right: calc(50% - min(260px, 44vw) + 24px);
+    right: calc(50% - min(230px, 39vw) + 24px);
     top: calc(50% + 5vh);
     transform: translateX(100%) translateY(-50%) rotate(6deg);
     transform-origin: left center;
@@ -156,121 +156,18 @@
       font-size: 10px;
       padding: 9px 20px;
     }
-  }
-
-  .glass-card {
-    position: fixed;
-    top: calc(50% + 5vh);
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: min(520px, 88vw);
-    height: min(600px, 86vh);
-    border-radius: 36px;
-    background: rgba(255,255,255, 0.18);
-    backdrop-filter: blur(2px) saturate(120%);
-    -webkit-backdrop-filter: blur(2px) saturate(120%);
-    border-top: 1.5px solid rgba(255,255,255, 1);
-    border-left: 1.5px solid rgba(255,255,255, 0.85);
-    border-right: 1.5px solid rgba(200,215,240, 0.3);
-    border-bottom: 1.5px solid rgba(200,215,240, 0.2);
-    box-shadow: 0 28px 72px rgba(180,200,240, 0.18), 0 4px 16px rgba(0,0,0,0.05),
-      inset 0 2px 4px rgba(255,255,255, 0.9), inset 0 -1px 4px rgba(180,200,240, 0.1);
-    pointer-events: none;
-    z-index: 10;
-  }
-  .glass-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 60%; height: 52%;
-    background: linear-gradient(128deg, rgba(255,255,255,0.48) 0%, rgba(255,255,255,0.06) 50%, transparent 68%);
-    border-radius: 36px 0 0 0;
-  }
-  .glass-card::after {
-    content: '';
-    position: absolute;
-    top: 14px; left: 8%; right: 8%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,1) 35%, rgba(255,255,255,0.6) 65%, transparent);
-  }
-  .tap-label {
-    position: fixed;
-    left: calc(50% - min(260px, 44vw) + 24px);
-    top: calc(50% + 5vh);
-    transform: translateX(-100%) translateY(-50%) rotate(-8deg);
-    transform-origin: right center;
-    padding: 11px 24px;
-    border-radius: 40px;
-    background: rgba(255,255,255, 0.28);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    border: 1px solid rgba(255,255,255, 0.65);
-    box-shadow: 0 4px 20px rgba(160,185,230, 0.22), inset 0 1px 0 rgba(255,255,255, 0.75);
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: rgba(70,100,160, 0.88);
-    animation: pulse 2.6s ease-in-out infinite;
-    z-index: 15;
-    white-space: nowrap;
-    pointer-events: none;
-  }
-  .tap-label::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 12%; right: 12%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
-    border-radius: 50%;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-  .info-card {
-    position: fixed;
-    right: calc(50% - min(260px, 44vw) + 24px);
-    top: calc(50% + 5vh);
-    transform: translateX(100%) translateY(-50%) rotate(6deg);
-    transform-origin: left center;
-    width: 220px;
-    padding: 20px 22px 16px;
-    border-radius: 20px;
-    background: rgba(255,255,255, 0.22);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid rgba(255,255,255, 0.65);
-    box-shadow: 0 4px 24px rgba(140,170,255, 0.18), inset 0 1px 0 rgba(255,255,255, 0.8);
-    z-index: 15;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.5s ease 0.4s;
-    font-size: 13px;
-    line-height: 1.6;
-    color: rgba(50,70,120,0.9);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  }
-  .info-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 10%; right: 10%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
-    border-radius: 50%;
-  }
-  .info-card.visible { opacity: 1; pointer-events: auto; }
-  .info-card strong { font-size: 14px; color: rgba(30,50,100,0.95); display: block; margin-bottom: 4px; }
-  @media (max-width: 600px) {
-    .glass-card { top: calc(50% + 12vh); width: 92vw; height: 76vh; border-radius: 28px; }
-    .tap-label { left: 50%; top: auto; bottom: 24px; transform: translateX(-50%) rotate(-4deg); font-size: 10px; padding: 9px 20px; }
-    .info-card { right: auto; left: 50%; top: auto; bottom: 90px; transform: translateX(-50%) rotate(0deg); width: min(260px, 80vw); }
+    .info-card {
+      right: auto;
+      left: 50%;
+      top: 3vh;
+      bottom: auto;
+      transform: translateX(-50%) rotate(0deg);
+      width: min(260px, 80vw);
+    }
   }
 </style>
 </head>
 <body>
-  <div class="glass-card"></div>
-  <div class="info-card" id="infoCard"><p><strong>Это ракета-носитель</strong>из спецпроекта РИР<br>«Реклама в невесомости»</p></div>
-  <div class="tap-label">нажми и открой</div>
   <div class="glass-card"></div>
   <div class="info-card" id="infoCard"><p><strong>Это ракета-носитель</strong>из спецпроекта РИР<br>«Реклама в невесомости»</p></div>
   <div class="tap-label">нажми и открой</div>
@@ -469,7 +366,9 @@ function updateCameraDistance() {
 
   const zoomOut = mobile ? MOBILE_ZOOM_OUT : 1;
 
-  const dist = sceneMaxDim * 2.1 * zoomOut;
+  const BACKGROUND_MARGIN = 1.12; // немного отдаляем камеру, чтобы фон занимал больше пространства
+
+  const dist = sceneMaxDim * 2.1 * zoomOut * BACKGROUND_MARGIN;
 
   camera.position.set(sceneCenter.x, sceneCenter.y + sceneSizeY * .12, sceneCenter.z + dist);
 
