@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>РИР — Коробочка с ракетой</title>
+<title>РИР — Коробочка с кукурузой</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
@@ -108,40 +108,11 @@
     z-index: 40;
   }
   #loader.hidden { opacity: 0; }
-  .info-card {
-    position: fixed;
-    right: calc(50% - min(230px, 39vw) + 24px);
-    top: calc(50% + 5vh);
-    transform: translateX(100%) translateY(-50%) rotate(6deg);
-    transform-origin: left center;
-    width: 220px;
-    padding: 20px 22px 16px;
-    border-radius: 20px;
-    background: rgba(255,255,255, 0.22);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid rgba(255,255,255, 0.65);
-    box-shadow: 0 4px 24px rgba(140,170,255, 0.18), inset 0 1px 0 rgba(255,255,255, 0.8);
-    z-index: 15;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.5s ease 0.4s;
-    font-size: 13px;
-    line-height: 1.6;
-    color: rgba(50,70,120,0.9);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  }
-  .info-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 10%; right: 10%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
-    border-radius: 50%;
-  }
-  .info-card.visible { opacity: 1; pointer-events: auto; }
-  .info-card strong { font-size: 14px; color: rgba(30,50,100,0.95); display: block; margin-bottom: 4px; }
   @media (max-width: 600px) {
+    html, body {
+      height: 100%;
+      min-height: 100svh;
+    }
     .glass-card {
       top: calc(50% + 12vh);
       width: 92vw;
@@ -156,20 +127,73 @@
       font-size: 10px;
       padding: 9px 20px;
     }
+  }
+
+  /* Карточка с описанием — появляется после открытия */
+  .info-card {
+    position: fixed;
+    right: calc(50% - min(230px, 39vw) + 24px);
+    top: calc(50% + 5vh);
+    transform: translateX(100%) translateY(-50%) rotate(6deg);
+    transform-origin: left center;
+    width: 220px;
+    padding: 20px 22px 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255,255,255, 0.65);
+    box-shadow:
+      0 4px 24px rgba(140,170,255, 0.18),
+      inset 0 1px 0 rgba(255,255,255, 0.8),
+      inset 0 -1px 0 rgba(180,200,240, 0.1);
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease 0.4s;
+  }
+  .info-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
+    border-radius: 50%;
+  }
+  .info-card.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .info-card p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(50, 70, 120, 0.9);
+    margin: 0 0 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  .info-card p strong {
+    font-size: 14px;
+    color: rgba(30, 50, 100, 0.95);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  @media (max-width: 600px) {
     .info-card {
       right: auto;
       left: 50%;
       top: 3vh;
       bottom: auto;
       transform: translateX(-50%) rotate(0deg);
-      width: min(260px, 80vw);
+      width: min(280px, 84vw);
+      padding: 14px 16px 12px;
+      font-size: 12px;
     }
   }
 </style>
 </head>
 <body>
   <div class="glass-card"></div>
-  <div class="info-card" id="infoCard"><p><strong>Это ракета-носитель</strong>из спецпроекта РИР<br>«Реклама в невесомости»</p></div>
   <div class="tap-label">нажми и открой</div>
   <div id="stage"></div>
   <div id="loader">Загрузка модели…</div>
@@ -190,7 +214,6 @@
 
 </script>
 <script type="module">
-
 
 import * as THREE from "three";
 
@@ -1149,101 +1172,44 @@ createLogoTexture().then(logoTexture => {
     rightLogoMesh.position.set(LOGO_X, bodyCenterY, center.z);
 
     rightHalf.add(rightLogoMesh);
+    (function() {
+      const FROG_URL = "https://raw.githubusercontent.com/sunagatullinadi-max/toy/main/corn.glb";
 
+      const loader = new GLTFLoader();
+      loader.load(FROG_URL, function(gltf) {
+        const frogModel = gltf.scene;
 
-    // ── РАКЕТА ВМЕСТО ЗАПИСКИ ──
-    // Материалы ракеты
-    var rS = 0.042; // масштаб ракеты под размер коробочки
+        const box3 = new THREE.Box3().setFromObject(frogModel);
+        const size = new THREE.Vector3();
+        box3.getSize(size);
+        const scale = 1.8 / Math.max(size.x, size.y, size.z);
+        frogModel.scale.setScalar(scale);
 
-    function rAddM(geo, mat, x, y, z) {
-      var m = new THREE.Mesh(geo, mat);
-      m.position.set(x*rS, y*rS, z*rS);
-      rocketGroup.add(m);
-      return m;
-    }
-    function rCyl(rt, rb, h, mat, x, y, z, seg) {
-      seg = seg || 32;
-      return rAddM(new THREE.CylinderGeometry(rt*rS, rb*rS, h*rS, seg), mat, x, y, z);
-    }
-    function rSph(r, mat, x, y, z) {
-      return rAddM(new THREE.SphereGeometry(r*rS, 24, 24), mat, x, y, z);
-    }
+        const paperCenterY = (box.min.y + body.bodyTopY) / 2;
+        box3.setFromObject(frogModel);
+        const center3 = new THREE.Vector3();
+        box3.getCenter(center3);
+        frogModel.position.set(
+          center.x - center3.x,
+          paperCenterY + 0.15 - center3.y,
+          center.z - center3.z
+        );
 
-    var mW = new THREE.MeshPhongMaterial({ color: 0xf2f2f2, shininess: 70 });
-    var mN = new THREE.MeshPhongMaterial({ color: 0x161748, shininess: 40 });
-    var mG = new THREE.MeshPhongMaterial({ color: 0xd8d8d8, shininess: 55 });
-    var mZ = new THREE.MeshPhongMaterial({ color: 0x7a7a8a, shininess: 100, specular: 0x9999bb });
+        pivot.add(frogModel);
 
-    var rocketGroup = new THREE.Group();
-
-    var boosters = [[2.7,0],[-2.7,0],[0,2.7],[0,-2.7]];
-    boosters.forEach(function(b, i) {
-      var bx = b[0], bz = b[1];
-      var alt = i >= 2;
-      var bm = alt ? mG : mW;
-      rCyl(1.34, 1.34, 14,  bm, bx, 7,    bz);
-      rCyl(0.68, 1.34, 4.8, bm, bx, 14.1, bz);
-      rCyl(1.44, 1.54, 0.9, mN, bx, 0.45, bz);
-      rCyl(1.36, 1.36, 1.1, mN, bx, 8.4,  bz);
-      rCyl(1.48, 1.58, 0.55, mN, bx, -0.28, bz);
-      var nAng = Math.atan2(bz, bx);
-      for (var n = 0; n < 2; n++) {
-        var na  = nAng + (n === 0 ? 0.4 : -0.4);
-        var nx  = bx + Math.cos(na) * 0.78;
-        var nz2 = bz + Math.sin(na) * 0.78;
-        rCyl(0.24, 0.36, 0.9,  mZ, nx, -0.75, nz2);
-        rCyl(0.36, 0.50, 0.45, mZ, nx, -1.38, nz2);
-      }
-    });
-
-    rCyl(1.44, 1.54, 1.9,  mN, 0, 0.95,  0);
-    rCyl(1.32, 1.32, 18,   mW, 0, 11.0,  0);
-    rCyl(1.33, 1.33, 1.3,  mN, 0, 10.0,  0);
-    rCyl(1.33, 1.33, 1.3,  mN, 0, 17.4,  0);
-    rCyl(1.08, 1.32, 2.8,  mW, 0, 21.4,  0);
-    rCyl(1.08, 1.08, 1.4,  mG, 0, 23.9,  0);
-    rCyl(1.10, 1.10, 0.45, mN, 0, 22.95, 0);
-
-    [[0.54,0],[-0.54,0],[0,0.54],[0,-0.54]].forEach(function(n){
-      rCyl(0.19, 0.31, 0.85, mZ, n[0], -0.52, n[1]);
-      rCyl(0.31, 0.43, 0.45, mZ, n[0], -1.10, n[1]);
-    });
-    [[0.63,0.63],[-0.63,0.63],[0.63,-0.63],[-0.63,-0.63]].forEach(function(n){
-      rCyl(0.09, 0.15, 0.5, mZ, n[0]*0.7, -0.48, n[1]*0.7);
-    });
-
-    rCyl(1.08, 1.08, 3.8,  mW, 0, 26.9, 0);
-    rCyl(1.32, 1.32, 0.45, mN, 0, 24.7, 0);
-    rCyl(1.32, 1.32, 0.45, mN, 0, 28.7, 0);
-    rCyl(0.88, 1.08, 1.8,  mG, 0, 30.1, 0);
-    rCyl(0.27, 0.40, 0.7,  mZ, 0, 24.0, 0);
-    rCyl(2.02, 0.88, 2.4,  mW, 0, 32.1,  0);
-    rCyl(2.02, 2.02, 5.3,  mW, 0, 35.55, 0);
-    rCyl(2.03, 2.03, 0.55, mN, 0, 34.85, 0);
-    rCyl(1.38, 2.02, 2.4,  mW, 0, 39.35, 0);
-    rCyl(0.58, 1.38, 1.9,  mW, 0, 41.55, 0);
-    rCyl(0.11, 0.58, 1.1,  mW, 0, 42.95, 0);
-    rSph(0.14, mW, 0, 43.56, 0);
-    rCyl(0.02, 0.02, 1.3,  mN, 0, 44.26, 0);
-
-    // Позиционируем ракету внутри коробочки
-    var paperCenterY = (box.min.y + body.bodyTopY) / 2;
-    rocketGroup.position.set(center.x, paperCenterY - 0.6, center.z);
-    // Поворачиваем горизонтально (лёжа), чтобы вписалась в коробочку
-    // вертикально — ракета стоит носом вверх
-    pivot.add(rocketGroup);
-
-    // Фиолетовое свечение
-    const rocketLight1 = new THREE.PointLight(0x4488ff, 5.0, 6);
-    rocketLight1.position.set(0.3, 1.0, 0.6);
-    pivot.add(rocketLight1);
-    const rocketLight2 = new THREE.PointLight(0x0033ff, 3.0, 5);
-    rocketLight2.position.set(-0.4, 0.2, -0.4);
-    pivot.add(rocketLight2);
-    const rocketLight3 = new THREE.PointLight(0x66aaff, 2.0, 4);
-    rocketLight3.position.set(0.0, -0.5, 0.5);
-    pivot.add(rocketLight3);
-
+        const frogLight1 = new THREE.PointLight(0xffee00, 5.0, 6);
+        frogLight1.position.set(0.3, 1.0, 0.6);
+        pivot.add(frogLight1);
+        const frogLight2 = new THREE.PointLight(0xffcc00, 3.0, 5);
+        frogLight2.position.set(-0.4, 0.2, -0.4);
+        pivot.add(frogLight2);
+        const frogLight3 = new THREE.PointLight(0xffaa00, 2.0, 4);
+        frogLight3.position.set(0.0, -0.5, 0.5);
+        pivot.add(frogLight3);
+      }, undefined, function(err) {
+        console.error('Frog load error:', err);
+      });
+    })();
 
     boxLocalMin = box.min.clone();
 
@@ -1469,6 +1435,11 @@ animate();
 
     
 </script>
+
+  <div class=info-card id=infoCard>
+    <p><strong>Это Поющая кукуруза,</strong>героиня спецпроекта РИР<br>«Песня плывет, реклама поет»</p>
+  </div>
+
 <script>
 (function() {
   var shown = false;
