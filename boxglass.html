@@ -1496,21 +1496,8 @@ animate();
 
     </script>
 
-  <div class=info-card id=infoCard>
+  <div class="info-card visible" id=infoCard>
     <p><strong>Чтобы читать лонгрид</strong><br>— листай вниз</p>
   </div>
-
-<script>
-(function() {
-  var shown = false;
-  document.getElementById('stage').addEventListener('click', function() {
-    if (shown) return;
-    shown = true;
-    setTimeout(function() {
-      document.getElementById('infoCard').classList.add('visible');
-    }, 600);
-  });
-})();
-</script>
 </body>
 </html>
