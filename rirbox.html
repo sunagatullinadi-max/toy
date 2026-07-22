@@ -9,7 +9,7 @@
     margin: 0;
     height: 100%;
     overflow: hidden;
-    background: transparent;
+    background: #000000;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   }
   #stage {
@@ -73,6 +73,7 @@ const stage = document.getElementById("stage");
 const loaderEl = document.getElementById("loader");
 
 const scene = new THREE.Scene;
+scene.background = new THREE.Color(0x000000);
 
 const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, .1, 100);
 
@@ -85,7 +86,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-renderer.setClearColor(0x000000, 0);
+renderer.setClearColor(0x000000, 1);
 
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
