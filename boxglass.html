@@ -141,6 +141,66 @@
       padding: 9px 20px;
       z-index: 15;
     }
+
+    .info-card {
+      right: auto;
+      left: 50%;
+      top: 3vh;
+      bottom: auto;
+      transform: translateX(-50%) rotate(0deg);
+      width: min(280px, 84vw);
+      padding: 14px 16px 12px;
+      font-size: 12px;
+    }
+  }
+
+  /* Карточка с описанием — появляется после открытия */
+  .info-card {
+    position: fixed;
+    right: calc(50% - min(230px, 39vw) + 24px);
+    top: calc(50% + 5vh);
+    transform: translateX(100%) translateY(-50%) rotate(6deg);
+    transform-origin: left center;
+    width: 220px;
+    padding: 20px 22px 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255,255,255, 0.65);
+    box-shadow:
+      0 4px 24px rgba(140,170,255, 0.18),
+      inset 0 1px 0 rgba(255,255,255, 0.8),
+      inset 0 -1px 0 rgba(180,200,240, 0.1);
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease 0.4s;
+  }
+  .info-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
+    border-radius: 50%;
+  }
+  .info-card.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .info-card p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(50, 70, 120, 0.9);
+    margin: 0 0 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  .info-card p strong {
+    font-size: 14px;
+    color: rgba(30, 50, 100, 0.95);
+    display: block;
+    margin-bottom: 0;
   }
 
   #loader {
@@ -1435,5 +1495,22 @@ function animate() {
 animate();
 
     </script>
+
+  <div class=info-card id=infoCard>
+    <p><strong>Чтобы читать лонгрид</strong><br>— листай вниз</p>
+  </div>
+
+<script>
+(function() {
+  var shown = false;
+  document.getElementById('stage').addEventListener('click', function() {
+    if (shown) return;
+    shown = true;
+    setTimeout(function() {
+      document.getElementById('infoCard').classList.add('visible');
+    }, 600);
+  });
+})();
+</script>
 </body>
 </html>
